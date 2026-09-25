@@ -28,8 +28,8 @@ COPY reports/ ./reports/
 # Create necessary directories
 RUN mkdir -p data/raw data/processed data/reference artifacts reports/figures
 
-# Expose ports
-EXPOSE 8000 8501
+# Expose port
+EXPOSE 8000
 
 # Copy entrypoint script
 COPY entrypoint.sh .
