@@ -19,7 +19,6 @@ COPY src/ ./src/
 COPY api/ ./api/
 COPY ui/ ./ui/
 COPY data/ ./data/
-COPY artifacts/ ./artifacts/
 COPY reports/ ./reports/
 
 # Create necessary directories

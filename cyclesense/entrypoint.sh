@@ -7,6 +7,12 @@ set -e
 
 echo "Starting CycleSense Application..."
 
+# Train model if not present
+if [ ! -f artifacts/model.joblib ]; then
+    echo "Model artifact not found. Training model..."
+    python src/train.py
+fi
+
 # Start FastAPI backend in background
 echo "Starting FastAPI on port 8000..."
 uvicorn api.main:app --host 0.0.0.0 --port 8000 &

@@ -53,7 +53,8 @@ data/processed/
 data/reference/
 
 # Artifacts
-artifacts/
+artifacts/*
+!artifacts/.gitkeep
 *.joblib
 *.pkl
 
