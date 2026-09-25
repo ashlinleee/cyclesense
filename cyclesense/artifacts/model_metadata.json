@@ -1,0 +1,14 @@
+{
+  "model_name": "gradient_boosting",
+  "model_type": "HistGradientBoostingRegressor",
+  "feature_set": "strict",
+  "metrics": {
+    "mae": 1.6995416939065655,
+    "rmse": 2.1785943795917926,
+    "r2": 0.30598650454109666
+  },
+  "training_time": 0.6808938980102539,
+  "n_features": 39,
+  "n_training_samples": 12800,
+  "random_state": 42
+}

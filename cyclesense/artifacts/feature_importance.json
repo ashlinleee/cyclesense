@@ -1,0 +1,402 @@
+{
+  "feature_importance": null,
+  "permutation_importance": [
+    {
+      "feature": "pcos_diagnosed",
+      "importance_mean": 0.25020298582672085,
+      "importance_std": 0.011006751259142172
+    },
+    {
+      "feature": "cycle_length_mean_last_5",
+      "importance_mean": 0.12598697046749294,
+      "importance_std": 0.0031175612301162846
+    },
+    {
+      "feature": "cycle_length_mean_last_3",
+      "importance_mean": 0.022339678883395764,
+      "importance_std": 0.001286221877782333
+    },
+    {
+      "feature": "bmi",
+      "importance_mean": 0.013059090210121615,
+      "importance_std": 0.00287187312060657
+    },
+    {
+      "feature": "birth_control_use",
+      "importance_mean": 0.007845900415093764,
+      "importance_std": 0.0013022497755665306
+    },
+    {
+      "feature": "cycle_length_lag_2",
+      "importance_mean": 0.004714106733173962,
+      "importance_std": 0.0004432192505001289
+    },
+    {
+      "feature": "prev_cycle_length",
+      "importance_mean": 0.0022788183170815656,
+      "importance_std": 0.0005496716412796167
+    },
+    {
+      "feature": "cycle_length_std_last_3",
+      "importance_mean": 0.0021539217805261355,
+      "importance_std": 0.0015029201299375766
+    },
+    {
+      "feature": "stress_delta",
+      "importance_mean": 0.001114913119483707,
+      "importance_std": 0.0021845818411550984
+    },
+    {
+      "feature": "water_intake_liters",
+      "importance_mean": 0.0009326229229010607,
+      "importance_std": 0.0008147276513401839
+    },
+    {
+      "feature": "cycle_length_days",
+      "importance_mean": 0.0008412967201640864,
+      "importance_std": 0.0005174457262690259
+    },
+    {
+      "feature": "sleep_delta",
+      "importance_mean": 0.0008084581904342025,
+      "importance_std": 0.0007102649868122339
+    },
+    {
+      "feature": "cycle_length_abs_change",
+      "importance_mean": 0.0007025822720561736,
+      "importance_std": 0.00030502366785877796
+    },
+    {
+      "feature": "sleep_hours",
+      "importance_mean": 0.00032498687186193197,
+      "importance_std": 0.0006790753312786191
+    },
+    {
+      "feature": "cycle_length_lag_3",
+      "importance_mean": 0.0002725240805686813,
+      "importance_std": 0.00020116415670067125
+    },
+    {
+      "feature": "day_of_year",
+      "importance_mean": 0.0002537868182910685,
+      "importance_std": 0.0006494197228531233
+    },
+    {
+      "feature": "diet_quality_Poor",
+      "importance_mean": 0.00016240102382552023,
+      "importance_std": 0.00020254850238683104
+    },
+    {
+      "feature": "month_sin",
+      "importance_mean": 0.00013834107909198589,
+      "importance_std": 0.0008038710947107122
+    },
+    {
+      "feature": "alcohol_consumption_Never",
+      "importance_mean": 8.078826120501148e-05,
+      "importance_std": 0.0003580301457263751
+    },
+    {
+      "feature": "quarter",
+      "importance_mean": 0.0,
+      "importance_std": 0.0
+    },
+    {
+      "feature": "alcohol_consumption_Weekly",
+      "importance_mean": 0.0,
+      "importance_std": 0.0
+    },
+    {
+      "feature": "diet_quality_Excellent",
+      "importance_mean": 0.0,
+      "importance_std": 0.0
+    },
+    {
+      "feature": "smoking_status_Yes",
+      "importance_mean": 0.0,
+      "importance_std": 0.0
+    },
+    {
+      "feature": "cycle_length_lag_1",
+      "importance_mean": 0.0,
+      "importance_std": 0.0
+    },
+    {
+      "feature": "stress_sleep_interaction",
+      "importance_mean": -5.821508605481362e-05,
+      "importance_std": 0.0006174137617137437
+    },
+    {
+      "feature": "cycle_length_std_last_5",
+      "importance_mean": -7.47929234746092e-05,
+      "importance_std": 0.0013733427880161253
+    },
+    {
+      "feature": "exercise_frequency_3\u20134 days/week",
+      "importance_mean": -8.903647441349527e-05,
+      "importance_std": 2.610722976975269e-05
+    },
+    {
+      "feature": "exercise_frequency_5\u20136 days/week",
+      "importance_mean": -9.427640413839367e-05,
+      "importance_std": 0.000521993480832891
+    },
+    {
+      "feature": "diet_quality_Good",
+      "importance_mean": -0.00010076171000188428,
+      "importance_std": 0.00011018355971240904
+    },
+    {
+      "feature": "month",
+      "importance_mean": -0.00011063263406954071,
+      "importance_std": 8.537987893221124e-05
+    },
+    {
+      "feature": "alcohol_consumption_Occasionally",
+      "importance_mean": -0.00016966099601516403,
+      "importance_std": 9.102305867945387e-05
+    },
+    {
+      "feature": "diet_quality_Average",
+      "importance_mean": -0.0001793198630005044,
+      "importance_std": 0.0002119960812781545
+    },
+    {
+      "feature": "month_cos",
+      "importance_mean": -0.00019698332183963884,
+      "importance_std": 0.0002456235175335826
+    },
+    {
+      "feature": "exercise_frequency_1\u20132 days/week",
+      "importance_mean": -0.000213240584261154,
+      "importance_std": 0.0001537058052766296
+    },
+    {
+      "feature": "smoking_status_No",
+      "importance_mean": -0.0003029644103715645,
+      "importance_std": 0.00011350764619531032
+    },
+    {
+      "feature": "age",
+      "importance_mean": -0.00040760775317003615,
+      "importance_std": 0.0006995933525534072
+    },
+    {
+      "feature": "caffeine_intake",
+      "importance_mean": -0.0005631263069376003,
+      "importance_std": 0.0006532153447612079
+    },
+    {
+      "feature": "cycle_length_change",
+      "importance_mean": -0.0008678614250037464,
+      "importance_std": 0.00027320276978669484
+    },
+    {
+      "feature": "stress_score_baseline",
+      "importance_mean": -0.0023573601706783796,
+      "importance_std": 0.000900238607030552
+    }
+  ],
+  "selected_features_f_regression": [
+    "age",
+    "bmi",
+    "pcos_diagnosed",
+    "stress_score_baseline",
+    "cycle_length_days",
+    "prev_cycle_length",
+    "cycle_length_lag_1",
+    "cycle_length_lag_2",
+    "cycle_length_lag_3",
+    "cycle_length_mean_last_3",
+    "cycle_length_std_last_3",
+    "cycle_length_mean_last_5",
+    "cycle_length_std_last_5",
+    "cycle_length_abs_change",
+    "month",
+    "quarter",
+    "day_of_year",
+    "month_sin",
+    "smoking_status_No",
+    "smoking_status_Yes"
+  ],
+  "selected_features_mutual_info": [
+    "age",
+    "bmi",
+    "birth_control_use",
+    "pcos_diagnosed",
+    "stress_score_baseline",
+    "cycle_length_days",
+    "prev_cycle_length",
+    "cycle_length_lag_1",
+    "cycle_length_lag_2",
+    "cycle_length_lag_3",
+    "cycle_length_mean_last_3",
+    "cycle_length_std_last_3",
+    "cycle_length_mean_last_5",
+    "cycle_length_std_last_5",
+    "cycle_length_change",
+    "stress_delta",
+    "diet_quality_Excellent",
+    "diet_quality_Good",
+    "alcohol_consumption_Never",
+    "smoking_status_No"
+  ],
+  "shap_importance": [
+    {
+      "feature": "pcos_diagnosed",
+      "shap_importance": 0.22756704694644114
+    },
+    {
+      "feature": "bmi",
+      "shap_importance": 0.15731890775825363
+    },
+    {
+      "feature": "cycle_length_mean_last_5",
+      "shap_importance": 0.14326968632254375
+    },
+    {
+      "feature": "cycle_length_mean_last_3",
+      "shap_importance": 0.06942762993271322
+    },
+    {
+      "feature": "birth_control_use",
+      "shap_importance": 0.05169528344665571
+    },
+    {
+      "feature": "cycle_length_lag_2",
+      "shap_importance": 0.03075911001915667
+    },
+    {
+      "feature": "stress_score_baseline",
+      "shap_importance": 0.022180086524099495
+    },
+    {
+      "feature": "stress_delta",
+      "shap_importance": 0.022004168909259908
+    },
+    {
+      "feature": "cycle_length_std_last_5",
+      "shap_importance": 0.021455726087122255
+    },
+    {
+      "feature": "caffeine_intake",
+      "shap_importance": 0.02142497333210275
+    },
+    {
+      "feature": "cycle_length_std_last_3",
+      "shap_importance": 0.020959898832559755
+    },
+    {
+      "feature": "cycle_length_days",
+      "shap_importance": 0.0184218160624366
+    },
+    {
+      "feature": "day_of_year",
+      "shap_importance": 0.017310197495393302
+    },
+    {
+      "feature": "sleep_delta",
+      "shap_importance": 0.01617819433554398
+    },
+    {
+      "feature": "cycle_length_change",
+      "shap_importance": 0.015059675992145043
+    },
+    {
+      "feature": "stress_sleep_interaction",
+      "shap_importance": 0.01363861142524034
+    },
+    {
+      "feature": "age",
+      "shap_importance": 0.013226884213173312
+    },
+    {
+      "feature": "cycle_length_lag_3",
+      "shap_importance": 0.012717762913347556
+    },
+    {
+      "feature": "water_intake_liters",
+      "shap_importance": 0.011843186185128975
+    },
+    {
+      "feature": "sleep_hours",
+      "shap_importance": 0.011090017004726102
+    },
+    {
+      "feature": "month_sin",
+      "shap_importance": 0.009704108370484453
+    },
+    {
+      "feature": "exercise_frequency_5\u20136 days/week",
+      "shap_importance": 0.00893682974626833
+    },
+    {
+      "feature": "month_cos",
+      "shap_importance": 0.00847237501402062
+    },
+    {
+      "feature": "alcohol_consumption_Occasionally",
+      "shap_importance": 0.0065520925052443306
+    },
+    {
+      "feature": "cycle_length_abs_change",
+      "shap_importance": 0.006064827912138221
+    },
+    {
+      "feature": "prev_cycle_length",
+      "shap_importance": 0.005277067592595159
+    },
+    {
+      "feature": "smoking_status_No",
+      "shap_importance": 0.003220232231874473
+    },
+    {
+      "feature": "alcohol_consumption_Never",
+      "shap_importance": 0.0025869287970659983
+    },
+    {
+      "feature": "diet_quality_Average",
+      "shap_importance": 0.002389543608601018
+    },
+    {
+      "feature": "diet_quality_Good",
+      "shap_importance": 0.0017098705660656094
+    },
+    {
+      "feature": "diet_quality_Poor",
+      "shap_importance": 0.0010548748957339676
+    },
+    {
+      "feature": "exercise_frequency_3\u20134 days/week",
+      "shap_importance": 0.000728352781473662
+    },
+    {
+      "feature": "exercise_frequency_1\u20132 days/week",
+      "shap_importance": 0.0004453546307242768
+    },
+    {
+      "feature": "month",
+      "shap_importance": 0.00039391013346588713
+    },
+    {
+      "feature": "alcohol_consumption_Weekly",
+      "shap_importance": 0.0
+    },
+    {
+      "feature": "diet_quality_Excellent",
+      "shap_importance": 0.0
+    },
+    {
+      "feature": "quarter",
+      "shap_importance": 0.0
+    },
+    {
+      "feature": "cycle_length_lag_1",
+      "shap_importance": 0.0
+    },
+    {
+      "feature": "smoking_status_Yes",
+      "shap_importance": 0.0
+    }
+  ]
+}

@@ -45,8 +45,8 @@ data/reference/
 # Reports
 reports/figures/*.png
 
-# Artifacts (model will be built in container)
-artifacts/
+# Artifacts (copied into container)
+# artifacts/
 
 # Environment
 .env

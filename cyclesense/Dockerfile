@@ -3,6 +3,9 @@ FROM python:3.9-slim
 # Set working directory
 WORKDIR /app
 
+# Set PYTHONPATH so python can locate modules in src/ and api/
+ENV PYTHONPATH=/app
+
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     gcc \
@@ -19,6 +22,7 @@ COPY src/ ./src/
 COPY api/ ./api/
 COPY ui/ ./ui/
 COPY data/ ./data/
+COPY artifacts/ ./artifacts/
 COPY reports/ ./reports/
 
 # Create necessary directories
