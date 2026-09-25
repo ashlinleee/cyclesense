@@ -15,7 +15,7 @@ import json
 import os
 
 # API configuration (reads environment variable API_URL, defaults to local API)
-API_URL = os.getenv("API_URL", "http://localhost:8000")
+API_URL = os.getenv("API_URL", "http://localhost:8000").rstrip("/")
 
 # Page configuration
 st.set_page_config(
@@ -62,9 +62,9 @@ def call_api(endpoint, method="GET", data=None):
     try:
         url = f"{API_URL}{endpoint}"
         if method == "GET":
-            response = requests.get(url, timeout=5)
+            response = requests.get(url, timeout=30)
         else:
-            response = requests.post(url, json=data, timeout=5)
+            response = requests.post(url, json=data, timeout=30)
         
         if response.status_code == 200:
             return response.json()
