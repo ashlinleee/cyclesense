@@ -12,8 +12,10 @@ import plotly.graph_objects as go
 from datetime import date, datetime
 import json
 
-# API configuration
-API_URL = "http://localhost:8000"
+import os
+
+# API configuration (reads environment variable API_URL, defaults to local API)
+API_URL = os.getenv("API_URL", "http://localhost:8000")
 
 # Page configuration
 st.set_page_config(
