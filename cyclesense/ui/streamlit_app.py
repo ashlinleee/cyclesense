@@ -102,7 +102,7 @@ def render_dashboard():
         st.success("✅ Connected to CycleSense API")
     else:
         st.error("❌ Unable to connect to CycleSense API")
-        st.info("Please ensure the API is running on http://localhost:8000")
+        st.info(f"Please ensure the API is accessible at `{API_URL}`")
         return
 
 
