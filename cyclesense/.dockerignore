@@ -1,0 +1,64 @@
+# Git
+.git
+.gitignore
+.github
+
+# DVC
+.dvc/
+*.dvc
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+venv/
+env/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# MLflow
+mlflow.db
+mlruns/
+
+# Data (will be mounted or copied during build)
+data/raw/*.csv
+data/processed/
+data/reference/
+
+# Reports
+reports/figures/*.png
+
+# Artifacts (model will be built in container)
+artifacts/
+
+# Environment
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Tests
+.pytest_cache/
+.coverage

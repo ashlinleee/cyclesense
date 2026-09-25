@@ -1,0 +1,2 @@
+# Raw data directory
+# CSV files are tracked by DVC, not Git

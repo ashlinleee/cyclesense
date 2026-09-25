@@ -1,0 +1,352 @@
+"""
+FastAPI application for CycleSense model serving.
+Provides prediction endpoints and model management.
+"""
+
+from fastapi import FastAPI, HTTPException, status
+from fastapi.responses import JSONResponse
+from pydantic import ValidationError
+import joblib
+import numpy as np
+import pandas as pd
+import logging
+import time
+from datetime import datetime
+from typing import Optional
+import json
+from pathlib import Path
+
+from api.schemas import (
+    PredictionRequest,
+    PredictionResponse,
+    ModelInfo,
+    HealthResponse,
+    MetricsResponse
+)
+from src.config import (
+    ARTIFACTS_DIR,
+    MODEL_REGISTRY_NAME,
+    MEDICAL_DISCLAIMER,
+    API_HOST,
+    API_PORT
+)
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Initialize FastAPI app
+app = FastAPI(
+    title="CycleSense API",
+    description="Menstrual Cycle Prediction & Pattern Intelligence API",
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc"
+)
+
+# Global variables for model and preprocessor
+model = None
+preprocessor = None
+feature_names = None
+model_metadata = None
+
+# API metrics
+api_metrics = {
+    "prediction_count": 0,
+    "error_count": 0,
+    "total_latency_ms": 0.0,
+    "start_time": datetime.now().isoformat()
+}
+
+
+def load_model():
+    """Load the trained model and preprocessor."""
+    global model, preprocessor, feature_names, model_metadata
+    
+    try:
+        model_path = ARTIFACTS_DIR / 'model.joblib'
+        metadata_path = ARTIFACTS_DIR / 'model_metadata.json'
+        
+        if not model_path.exists():
+            raise FileNotFoundError(f"Model not found at {model_path}")
+        
+        # Load model data
+        model_data = joblib.load(model_path)
+        model = model_data['model']
+        preprocessor = model_data['preprocessor']
+        feature_names = model_data['feature_names']
+        
+        # Load metadata
+        if metadata_path.exists():
+            with open(metadata_path, 'r') as f:
+                model_metadata = json.load(f)
+        else:
+            model_metadata = {}
+        
+        logger.info("Model loaded successfully")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Failed to load model: {e}")
+        return False
+
+
+def prepare_prediction_data(request: PredictionRequest) -> pd.DataFrame:
+    """
+    Prepare prediction data from API request.
+    Converts API request to DataFrame format expected by the model.
+    """
+    # Start with profile data
+    data = {
+        'age': request.profile.age,
+        'bmi': request.profile.bmi,
+        'diet_quality': request.profile.diet_quality,
+        'exercise_frequency': request.profile.exercise_frequency,
+        'sleep_hours': request.profile.sleep_hours,
+        'caffeine_intake': request.profile.caffeine_intake,
+        'water_intake_liters': request.profile.water_intake_liters,
+        'alcohol_consumption': request.profile.alcohol_consumption,
+        'smoking_status': request.profile.smoking_status,
+        'birth_control_use': request.profile.birth_control_use,
+        'pcos_diagnosed': request.profile.pcos_diagnosed,
+        'stress_score_baseline': request.profile.stress_score_baseline,
+    }
+    
+    # Add cycle history data
+    data.update({
+        'cycle_length_days': request.cycle_history.cycle_length_days,
+        'prev_cycle_length': request.cycle_history.prev_cycle_length,
+        'cycle_phase': request.cycle_history.cycle_phase,
+        'flow_level': request.cycle_history.flow_level,
+        'pain_level': request.cycle_history.pain_level,
+        'pms_symptoms': request.cycle_history.pms_symptoms,
+        'mood_score': request.cycle_history.mood_score,
+        'stress_score_cycle': request.cycle_history.stress_score_cycle,
+        'sleep_hours_cycle': request.cycle_history.sleep_hours_cycle,
+        'energy_level': request.cycle_history.energy_level,
+        'concentration_score': request.cycle_history.concentration_score,
+        'work_hours_lost': request.cycle_history.work_hours_lost,
+        'start_date': request.cycle_history.start_date,
+    })
+    
+    # Add engineered features from historical cycles
+    if request.historical_cycles:
+        historical = request.historical_cycles
+        
+        # Lag features
+        data['cycle_length_lag_1'] = historical[0] if len(historical) > 0 else None
+        data['cycle_length_lag_2'] = historical[1] if len(historical) > 1 else None
+        data['cycle_length_lag_3'] = historical[2] if len(historical) > 2 else None
+        
+        # Rolling statistics (simplified)
+        if len(historical) >= 3:
+            data['cycle_length_mean_last_3'] = np.mean(historical[:3])
+            data['cycle_length_std_last_3'] = np.std(historical[:3])
+            data['cycle_length_min_last_3'] = np.min(historical[:3])
+            data['cycle_length_max_last_3'] = np.max(historical[:3])
+        else:
+            data['cycle_length_mean_last_3'] = np.mean(historical) if historical else None
+            data['cycle_length_std_last_3'] = np.std(historical) if len(historical) > 1 else None
+            data['cycle_length_min_last_3'] = np.min(historical) if historical else None
+            data['cycle_length_max_last_3'] = np.max(historical) if historical else None
+        
+        if len(historical) >= 5:
+            data['cycle_length_mean_last_5'] = np.mean(historical[:5])
+            data['cycle_length_std_last_5'] = np.std(historical[:5])
+        else:
+            data['cycle_length_mean_last_5'] = np.mean(historical) if historical else None
+            data['cycle_length_std_last_5'] = np.std(historical) if len(historical) > 1 else None
+        
+        # Change features
+        if len(historical) > 1:
+            data['cycle_length_change'] = historical[0] - historical[1]
+            data['cycle_length_abs_change'] = abs(historical[0] - historical[1])
+        else:
+            data['cycle_length_change'] = 0.0
+            data['cycle_length_abs_change'] = 0.0
+    else:
+        # Default values if no historical data
+        data.update({
+            'cycle_length_lag_1': None,
+            'cycle_length_lag_2': None,
+            'cycle_length_lag_3': None,
+            'cycle_length_mean_last_3': None,
+            'cycle_length_std_last_3': None,
+            'cycle_length_min_last_3': None,
+            'cycle_length_max_last_3': None,
+            'cycle_length_mean_last_5': None,
+            'cycle_length_std_last_5': None,
+            'cycle_length_change': 0.0,
+            'cycle_length_abs_change': 0.0
+        })
+    
+    # Cross-source features
+    if request.cycle_history.stress_score_cycle and request.profile.stress_score_baseline:
+        data['stress_delta'] = request.cycle_history.stress_score_cycle - request.profile.stress_score_baseline
+    else:
+        data['stress_delta'] = 0.0
+    
+    if request.cycle_history.sleep_hours_cycle and request.profile.sleep_hours:
+        data['sleep_delta'] = request.cycle_history.sleep_hours_cycle - request.profile.sleep_hours
+    else:
+        data['sleep_delta'] = 0.0
+    
+    data['stress_sleep_interaction'] = data['stress_delta'] * data['sleep_delta']
+    
+    # Date features
+    if request.cycle_history.start_date:
+        data['month'] = request.cycle_history.start_date.month
+        data['quarter'] = (request.cycle_history.start_date.month - 1) // 3 + 1
+        data['day_of_year'] = request.cycle_history.start_date.timetuple().tm_yday
+        data['month_sin'] = np.sin(2 * np.pi * data['month'] / 12)
+        data['month_cos'] = np.cos(2 * np.pi * data['month'] / 12)
+    else:
+        data.update({
+            'month': 6,  # Default to June
+            'quarter': 2,
+            'day_of_year': 180,
+            'month_sin': 0.0,
+            'month_cos': -1.0
+        })
+    
+    return pd.DataFrame([data])
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Load model on startup."""
+    logger.info("Starting CycleSense API...")
+    if load_model():
+        logger.info("Model loaded successfully on startup")
+    else:
+        logger.warning("Failed to load model on startup. Will retry on first request.")
+
+
+@app.get("/health", response_model=HealthResponse)
+async def health_check():
+    """Health check endpoint."""
+    return HealthResponse(
+        status="healthy" if model is not None else "unhealthy",
+        model_loaded=model is not None,
+        version="1.0.0"
+    )
+
+
+@app.get("/model-info", response_model=ModelInfo)
+async def get_model_info():
+    """Get model information."""
+    if model_metadata is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Model metadata not available"
+        )
+    
+    return ModelInfo(
+        model_name=model_metadata.get('model_name', 'Unknown'),
+        model_type=model_metadata.get('model_type', 'Unknown'),
+        model_version=model_metadata.get('model_version', '1.0.0'),
+        feature_set=model_metadata.get('feature_set', 'strict'),
+        metrics=model_metadata.get('metrics', {}),
+        training_date=model_metadata.get('training_date', 'Unknown'),
+        medical_disclaimer=MEDICAL_DISCLAIMER.strip()
+    )
+
+
+@app.post("/predict", response_model=PredictionResponse)
+async def predict(request: PredictionRequest):
+    """
+    Predict next cycle length.
+    
+    Accepts user profile and cycle history, returns predicted next cycle length.
+    """
+    global api_metrics
+    
+    # Load model if not loaded
+    if model is None:
+        if not load_model():
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Model not available. Please train the model first."
+            )
+    
+    start_time = time.time()
+    
+    try:
+        # Prepare data
+        input_data = prepare_prediction_data(request)
+        
+        # Apply preprocessing
+        X_processed = preprocessor.transform(input_data)
+        
+        # Make prediction
+        prediction = model.predict(X_processed)[0]
+        
+        # Calculate latency
+        latency_ms = (time.time() - start_time) * 1000
+        
+        # Update metrics
+        api_metrics["prediction_count"] += 1
+        api_metrics["total_latency_ms"] += latency_ms
+        
+        logger.info(f"Prediction: {prediction:.2f} days, latency: {latency_ms:.2f}ms")
+        
+        return PredictionResponse(
+            predicted_next_cycle_length_days=round(prediction, 2),
+            model_version=model_metadata.get('model_version', '1.0.0') if model_metadata else '1.0.0',
+            prediction_type="educational_estimate",
+            confidence_interval=None  # Could add uncertainty estimation
+        )
+        
+    except ValidationError as e:
+        api_metrics["error_count"] += 1
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Validation error: {e}"
+        )
+    except Exception as e:
+        api_metrics["error_count"] += 1
+        logger.error(f"Prediction error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Prediction failed: {str(e)}"
+        )
+
+
+@app.get("/metrics", response_model=MetricsResponse)
+async def get_metrics():
+    """Get API metrics."""
+    if api_metrics["prediction_count"] > 0:
+        avg_latency = api_metrics["total_latency_ms"] / api_metrics["prediction_count"]
+    else:
+        avg_latency = 0.0
+    
+    return MetricsResponse(
+        prediction_count=api_metrics["prediction_count"],
+        error_count=api_metrics["error_count"],
+        average_latency_ms=round(avg_latency, 2),
+        model_version=model_metadata.get('model_version', '1.0.0') if model_metadata else '1.0.0'
+    )
+
+
+@app.get("/")
+async def root():
+    """Root endpoint with API information."""
+    return {
+        "name": "CycleSense API",
+        "version": "1.0.0",
+        "description": "Menstrual Cycle Prediction & Pattern Intelligence",
+        "endpoints": {
+            "health": "/health",
+            "model-info": "/model-info",
+            "predict": "/predict",
+            "metrics": "/metrics",
+            "docs": "/docs"
+        },
+        "medical_disclaimer": MEDICAL_DISCLAIMER.strip()
+    }
+
+
+if __name__ == "__main__":
+    import uvicorn
+    
+    logger.info(f"Starting CycleSense API on {API_HOST}:{API_PORT}")
+    uvicorn.run(app, host=API_HOST, port=API_PORT)
