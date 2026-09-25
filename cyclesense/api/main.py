@@ -235,6 +235,10 @@ async def startup_event():
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
     """Health check endpoint."""
+    global model
+    if model is None:
+        load_model()
+        
     return HealthResponse(
         status="healthy" if model is not None else "unhealthy",
         model_loaded=model is not None,
