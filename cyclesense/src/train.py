@@ -35,9 +35,12 @@ logger = logging.getLogger(__name__)
 # Ensure artifacts directory exists
 ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
 
-# Set MLflow tracking
-mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
-mlflow.set_experiment(MLFLOW_EXPERIMENT_NAME)
+# Set MLflow tracking safely
+try:
+    mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+    mlflow.set_experiment(MLFLOW_EXPERIMENT_NAME)
+except Exception as e:
+    logger.warning(f"MLflow initialization skipped: {e}")
 
 
 def calculate_metrics(y_true, y_pred):
