@@ -73,10 +73,10 @@ def load_model():
     """Load the trained model and preprocessor."""
     global model, preprocessor, feature_names, model_metadata
     
+    model_path = ARTIFACTS_DIR / 'model.joblib'
+    metadata_path = ARTIFACTS_DIR / 'model_metadata.json'
+    
     try:
-        model_path = ARTIFACTS_DIR / 'model.joblib'
-        metadata_path = ARTIFACTS_DIR / 'model_metadata.json'
-        
         if not model_path.exists():
             raise FileNotFoundError(f"Model not found at {model_path}")
         
@@ -97,8 +97,25 @@ def load_model():
         return True
         
     except Exception as e:
-        logger.error(f"Failed to load model: {e}")
-        return False
+        logger.error(f"Failed to load model: {e}. Retraining model for current environment...")
+        try:
+            from src.train import run_experiments
+            run_experiments(feature_set='strict')
+            
+            model_data = joblib.load(model_path)
+            model = model_data['model']
+            preprocessor = model_data['preprocessor']
+            feature_names = model_data['feature_names']
+            
+            if metadata_path.exists():
+                with open(metadata_path, 'r') as f:
+                    model_metadata = json.load(f)
+            
+            logger.info("Model retrained and loaded successfully")
+            return True
+        except Exception as retry_e:
+            logger.error(f"Retraining failed: {retry_e}")
+            return False
 
 
 def prepare_prediction_data(request: PredictionRequest) -> pd.DataFrame:
