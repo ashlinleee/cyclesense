@@ -1,52 +1,56 @@
 # Git
 .git
 .gitignore
-.github
-
-# DVC
-.dvc/
-*.dvc
 
 # Python
-__pycache__/
+__pycache__
 *.pyc
 *.pyo
 *.pyd
 .Python
 *.so
-*.egg-info/
-dist/
-build/
+*.egg-info
+.eggs
+dist
+build
 
 # Virtual environments
-venv/
-env/
+venv
+env
+ENV
 .venv
 
 # IDE
-.vscode/
-.idea/
+.vscode
+.idea
 *.swp
 *.swo
 
 # Jupyter
-.ipynb_checkpoints/
+.ipynb_checkpoints
 *.ipynb
 
 # MLflow
 mlflow.db
-mlruns/
+mlruns
 
-# Data (will be mounted or copied during build)
-data/raw/*.csv
-data/processed/
-data/reference/
+# DVC
+.dvc
+.dvc.lock
+*.dvc
 
-# Reports
+# Processed data (keep raw data)
+data/processed
+data/reference
+
+# Reports figures (keep important ones)
 reports/figures/*.png
+!reports/figures/.gitkeep
 
-# Artifacts (copied into container)
-# artifacts/
+# Allow model artifacts
+!artifacts/*.joblib
+!artifacts/*.json
+!artifacts/*.pkl
 
 # Environment
 .env
@@ -59,6 +63,5 @@ Thumbs.db
 # Logs
 *.log
 
-# Tests
-.pytest_cache/
-.coverage
+# Streamlit cache
+.streamlit/cache
