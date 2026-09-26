@@ -157,6 +157,10 @@ def render_predict_page():
         "28, 29, 27, 28, 30"
     )
     
+    # Cycle Start Date
+    st.subheader("Current Cycle Start Date")
+    start_date = st.date_input("When did your current cycle start?", date.today())
+    
     try:
         historical_list = [float(x.strip()) for x in historical_cycles.split(",") if x.strip()]
     except ValueError:
@@ -194,7 +198,7 @@ def render_predict_page():
                     "energy_level": 7,
                     "concentration_score": 7,
                     "work_hours_lost": 3.0,
-                    "start_date": date.today().isoformat()
+                    "start_date": start_date.isoformat()
                 },
                 "historical_cycles": historical_list
             }
@@ -220,6 +224,10 @@ def render_predict_page():
                         response['model_version'],
                         "Educational Estimate"
                     )
+                
+                # Display next period date if available
+                if response.get('predicted_next_period_date'):
+                    st.info(f"📅 **Predicted Next Period Date:** {response['predicted_next_period_date']}")
                 
                 st.info(f"Prediction Type: {response['prediction_type']}")
 

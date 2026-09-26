@@ -53,6 +53,7 @@ class PredictionRequest(BaseModel):
 class PredictionResponse(BaseModel):
     """Prediction response."""
     predicted_next_cycle_length_days: float = Field(..., description="Predicted next cycle length in days")
+    predicted_next_period_date: Optional[str] = Field(None, description="Predicted next period date (YYYY-MM-DD)")
     model_version: str = Field(..., description="Model version")
     prediction_type: str = Field(..., description="Type of prediction: educational_estimate")
     confidence_interval: Optional[tuple] = Field(None, description="Confidence interval (if available)")

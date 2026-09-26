@@ -58,11 +58,12 @@ data/reference/
 .streamlit/cache/
 
 # Artifacts
-artifacts/*
+# Track trained model artifacts for deployment
 !artifacts/.gitkeep
 !artifacts/*.joblib
 !artifacts/*.json
 !artifacts/*.pkl
+artifacts/temp/
 
 # Reports
 reports/figures/*.png

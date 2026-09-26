@@ -94,6 +94,7 @@ def load_model():
     
     try:
         if not model_path.exists():
+            logger.warning(f"Model not found at {model_path}")
             raise FileNotFoundError(f"Model not found at {model_path}")
         
         logger.info(f"Loading model from {model_path}...")
@@ -110,7 +111,8 @@ def load_model():
         else:
             model_metadata = {}
         
-        logger.info("Model loaded successfully")
+        logger.info(f"Model loaded successfully: {type(model).__name__}")
+        logger.info(f"Model metadata: {model_metadata.get('model_name', 'unknown')}")
         return True
         
     except Exception as e:
@@ -426,8 +428,16 @@ async def predict(request: PredictionRequest):
         
         logger.info(f"Prediction: {prediction:.2f} days, latency: {latency_ms:.2f}ms")
         
+        # Calculate next period date if start_date is provided
+        next_period_date = None
+        if request.cycle_history.start_date:
+            from datetime import timedelta
+            next_period_date = request.cycle_history.start_date + timedelta(days=int(round(prediction)))
+            next_period_date = next_period_date.isoformat()
+        
         return PredictionResponse(
             predicted_next_cycle_length_days=round(prediction, 2),
+            predicted_next_period_date=next_period_date,
             model_version=model_metadata.get('model_version', '1.0.0') if model_metadata else '1.0.0',
             prediction_type="educational_estimate",
             confidence_interval=None  # Could add uncertainty estimation
