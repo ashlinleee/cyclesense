@@ -238,8 +238,213 @@ def render_pattern_insights():
     
     render_disclaimer()
     
-    st.info("Pattern insights would be displayed here based on historical cycle data.")
-    st.info("This feature requires historical cycle data analysis.")
+    # Input section for historical cycle data
+    st.subheader("Historical Cycle Data")
+    historical_cycles_input = st.text_input(
+        "Enter your historical cycle lengths (comma-separated, most recent first)",
+        "28, 29, 27, 28, 30, 27, 26, 28, 29, 28",
+        help="Enter at least 3 cycle lengths for meaningful analysis"
+    )
+    
+    try:
+        historical_cycles = [float(x.strip()) for x in historical_cycles_input.split(",") if x.strip()]
+    except ValueError:
+        st.error("Please enter valid numbers separated by commas")
+        return
+    
+    if len(historical_cycles) < 3:
+        st.warning("Please enter at least 3 cycle lengths for meaningful analysis")
+        return
+    
+    # Basic statistics
+    st.subheader("📈 Cycle Length Statistics")
+    
+    import numpy as np
+    
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.metric("Average", f"{np.mean(historical_cycles):.1f} days")
+    
+    with col2:
+        st.metric("Median", f"{np.median(historical_cycles):.1f} days")
+    
+    with col3:
+        st.metric("Min", f"{np.min(historical_cycles):.1f} days")
+    
+    with col4:
+        st.metric("Max", f"{np.max(historical_cycles):.1f} days")
+    
+    # Variability analysis
+    st.subheader("📊 Variability Analysis")
+    
+    std_dev = np.std(historical_cycles)
+    cv = (std_dev / np.mean(historical_cycles)) * 100  # Coefficient of variation
+    
+    col5, col6 = st.columns(2)
+    
+    with col5:
+        st.metric("Standard Deviation", f"{std_dev:.2f} days")
+    
+    with col6:
+        st.metric("Variability", f"{cv:.1f}%")
+    
+    # Variability interpretation
+    if cv < 5:
+        variability_level = "Very Consistent"
+        variability_color = "🟢"
+    elif cv < 10:
+        variability_level = "Consistent"
+        variability_color = "🟡"
+    elif cv < 15:
+        variability_level = "Moderately Variable"
+        variability_color = "🟠"
+    else:
+        variability_level = "Highly Variable"
+        variability_color = "🔴"
+    
+    st.info(f"{variability_color} **Cycle Variability:** {variability_level}")
+    
+    # Trend analysis
+    st.subheader("📉 Trend Analysis")
+    
+    # Calculate trend
+    if len(historical_cycles) >= 3:
+        # Simple linear trend
+        x = np.arange(len(historical_cycles))
+        y = np.array(historical_cycles)
+        z = np.polyfit(x, y, 1)
+        trend = z[0]  # Slope
+        
+        col7, col8 = st.columns(2)
+        
+        with col7:
+            if trend > 0.1:
+                trend_direction = "Increasing ↗️"
+                trend_color = "🔴"
+            elif trend < -0.1:
+                trend_direction = "Decreasing ↘️"
+                trend_color = "🟢"
+            else:
+                trend_direction = "Stable ➡️"
+                trend_color = "🟡"
+            
+            st.metric("Trend", f"{trend_direction}")
+        
+        with col8:
+            recent_avg = np.mean(historical_cycles[:3])  # Most recent 3
+            overall_avg = np.mean(historical_cycles)
+            difference = recent_avg - overall_avg
+            
+            if difference > 1:
+                recent_status = "Above Average"
+                status_color = "🔴"
+            elif difference < -1:
+                recent_status = "Below Average"
+                status_color = "🟢"
+            else:
+                recent_status = "Near Average"
+                status_color = "🟡"
+            
+            st.metric("Recent Cycles", f"{status_color} {recent_status}")
+    
+    # Cycle length visualization
+    st.subheader("📊 Cycle Length Over Time")
+    
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=list(range(len(historical_cycles), 0, -1)),
+        y=historical_cycles,
+        mode='lines+markers',
+        name='Cycle Length',
+        line=dict(color='#0B3D3F', width=2),
+        marker=dict(size=8)
+    ))
+    
+    fig.add_hline(y=np.mean(historical_cycles), line_dash="dash", line_color="red", 
+                  annotation_text=f"Average: {np.mean(historical_cycles):.1f} days")
+    
+    fig.update_layout(
+        title="Historical Cycle Lengths",
+        xaxis_title="Cycles Ago",
+        yaxis_title="Cycle Length (days)",
+        template="plotly_white",
+        height=400
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
+    
+    # Pattern analysis
+    st.subheader("🔍 Pattern Analysis")
+    
+    # Find patterns
+    patterns = []
+    
+    # Check for regularity
+    if std_dev < 2:
+        patterns.append("✅ Your cycles are very regular and predictable")
+    elif std_dev < 4:
+        patterns.append("🟡 Your cycles show moderate regularity")
+    else:
+        patterns.append("🔴 Your cycles show significant variability")
+    
+    # Check for recent changes
+    if len(historical_cycles) >= 6:
+        recent_half = historical_cycles[:len(historical_cycles)//2]
+        earlier_half = historical_cycles[len(historical_cycles)//2:]
+        
+        if np.mean(recent_half) > np.mean(earlier_half) + 2:
+            patterns.append("⚠️ Your cycles have been getting longer recently")
+        elif np.mean(recent_half) < np.mean(earlier_half) - 2:
+            patterns.append("⚠️ Your cycles have been getting shorter recently")
+        else:
+            patterns.append("✅ Your cycle length has been stable over time")
+    
+    # Check for extreme values
+    if np.max(historical_cycles) - np.min(historical_cycles) > 10:
+        patterns.append("⚠️ You have significant variation between your shortest and longest cycles")
+    
+    for pattern in patterns:
+        st.info(pattern)
+    
+    # Lifestyle factor correlations (simplified)
+    st.subheader("🎯 Lifestyle Impact Tips")
+    
+    tips = [
+        "🧘 **Stress Management**: High stress levels can affect cycle regularity",
+        "😴 **Sleep Quality**: Consistent sleep patterns support hormonal balance",
+        "🏃 **Regular Exercise**: Moderate exercise can help regulate cycles",
+        "🥗 **Balanced Diet**: Nutritional factors influence cycle regularity",
+        "💧 **Hydration**: Adequate water intake supports overall health"
+    ]
+    
+    for tip in tips:
+        st.markdown(tip)
+    
+    # Next cycle prediction based on patterns
+    st.subheader("🔮 Pattern-Based Prediction")
+    
+    if len(historical_cycles) >= 3:
+        # Use recent average as pattern-based prediction
+        recent_avg = np.mean(historical_cycles[:3])
+        weighted_avg = (recent_avg * 0.6 + np.mean(historical_cycles) * 0.4)
+        
+        col9, col10 = st.columns(2)
+        
+        with col9:
+            st.metric("Pattern-Based Estimate", f"{weighted_avg:.1f} days")
+        
+        with col10:
+            if cv < 10:
+                confidence = "High"
+            elif cv < 15:
+                confidence = "Medium"
+            else:
+                confidence = "Low"
+            
+            st.metric("Prediction Confidence", confidence)
+        
+        st.info("📝 This pattern-based estimate considers your recent cycles and overall trends. For personalized predictions, use the Predict Next Cycle page.")
 
 
 def render_model_insights():
