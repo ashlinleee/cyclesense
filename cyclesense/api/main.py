@@ -23,6 +23,7 @@ from api.schemas import (
     HealthResponse,
     MetricsResponse
 )
+import traceback
 from src.config import (
     ARTIFACTS_DIR,
     MODEL_REGISTRY_NAME,
@@ -30,6 +31,7 @@ from src.config import (
     API_HOST,
     API_PORT
 )
+from src.features import HistoricalCycleFeatures, CrossSourceFeatures, DateFeatures
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -59,6 +61,8 @@ model = None
 preprocessor = None
 feature_names = None
 model_metadata = None
+model_loading = False
+model_load_error = None
 
 # API metrics
 api_metrics = {
@@ -71,7 +75,19 @@ api_metrics = {
 
 def load_model():
     """Load the trained model and preprocessor."""
-    global model, preprocessor, feature_names, model_metadata
+    global model, preprocessor, feature_names, model_metadata, model_loading, model_load_error
+    
+    # Prevent concurrent loading attempts
+    if model_loading:
+        logger.info("Model already loading, skipping duplicate load attempt")
+        return False
+    
+    if model is not None:
+        logger.info("Model already loaded")
+        return True
+    
+    model_loading = True
+    model_load_error = None
     
     model_path = ARTIFACTS_DIR / 'model.joblib'
     metadata_path = ARTIFACTS_DIR / 'model_metadata.json'
@@ -80,6 +96,7 @@ def load_model():
         if not model_path.exists():
             raise FileNotFoundError(f"Model not found at {model_path}")
         
+        logger.info(f"Loading model from {model_path}...")
         # Load model data
         model_data = joblib.load(model_path)
         model = model_data['model']
@@ -97,25 +114,34 @@ def load_model():
         return True
         
     except Exception as e:
-        logger.error(f"Failed to load model: {e}. Retraining model for current environment...")
+        logger.error(f"Failed to load model: {e}\n{traceback.format_exc()}")
+        model_load_error = str(e)
+        logger.info("Retrying with fallback model training...")
         try:
-            from src.train import run_experiments
-            run_experiments(feature_set='strict')
+            from src.train_fast import train_fast_model
             
+            logger.info("Running fast fallback training...")
+            model, metrics = train_fast_model()
+            
+            # Reload the newly saved model
             model_data = joblib.load(model_path)
             model = model_data['model']
             preprocessor = model_data['preprocessor']
             feature_names = model_data['feature_names']
             
+            # Load metadata
             if metadata_path.exists():
                 with open(metadata_path, 'r') as f:
                     model_metadata = json.load(f)
             
-            logger.info("Model retrained and loaded successfully")
+            logger.info("Fallback model trained and loaded successfully")
             return True
         except Exception as retry_e:
-            logger.error(f"Retraining failed: {retry_e}")
+            logger.error(f"Fallback training failed: {retry_e}\n{traceback.format_exc()}")
+            model_load_error = f"Fallback training failed: {retry_e}"
             return False
+    finally:
+        model_loading = False
 
 
 def prepare_prediction_data(request: PredictionRequest) -> pd.DataFrame:
@@ -241,23 +267,25 @@ def prepare_prediction_data(request: PredictionRequest) -> pd.DataFrame:
 
 @app.on_event("startup")
 async def startup_event():
-    """Load model on startup."""
+    """Load model on startup - non-blocking for cold starts."""
     logger.info("Starting CycleSense API...")
-    if load_model():
-        logger.info("Model loaded successfully on startup")
-    else:
-        logger.warning("Failed to load model on startup. Will retry on first request.")
+    # Don't block startup - model will load on first request
+    logger.info("Model will be loaded on first request (lazy loading for cold starts)")
 
 
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
-    """Health check endpoint."""
-    global model
-    if model is None:
-        load_model()
-        
+    """Health check endpoint - always returns healthy for Render."""
+    global model, model_loading, model_load_error
+    
+    # Try to load model if not loaded and not currently loading
+    if model is None and not model_loading:
+        # Don't block health check - trigger async load if needed
+        logger.info("Health check: model not loaded, will load on first request")
+    
+    # Always return healthy for Render - model loads lazily
     return HealthResponse(
-        status="healthy" if model is not None else "unhealthy",
+        status="healthy",
         model_loaded=model is not None,
         version="1.0.0"
     )
@@ -286,14 +314,22 @@ async def predict(request: PredictionRequest):
     
     Accepts user profile and cycle history, returns predicted next cycle length.
     """
-    global api_metrics
+    global api_metrics, model, model_loading, model_load_error
     
-    # Load model if not loaded
+    # Load model if not loaded (with timeout protection)
     if model is None:
-        if not load_model():
+        if model_loading:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Model not available. Please train the model first."
+                detail="Model is currently loading. Please try again in a few seconds."
+            )
+        
+        logger.info("Loading model on first prediction request...")
+        if not load_model():
+            error_msg = model_load_error if model_load_error else "Model not available. Please train the model first."
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=error_msg
             )
     
     start_time = time.time()
@@ -332,7 +368,7 @@ async def predict(request: PredictionRequest):
         )
     except Exception as e:
         api_metrics["error_count"] += 1
-        logger.error(f"Prediction error: {e}")
+        logger.error(f"Prediction error: {e}\n{traceback.format_exc()}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Prediction failed: {str(e)}"
