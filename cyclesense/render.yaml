@@ -13,7 +13,7 @@ services:
       - key: PYTHONDONTWRITEBYTECODE
         value: "1"
       - key: API_URL
-        value: https://cyclesense-api.onrender.com
+        value: https://cyclesense-yjca.onrender.com
     healthCheckPath: /health
     healthCheckTimeout: 30
     healthCheckInterval: 15
@@ -30,7 +30,7 @@ services:
       - key: PORT
         value: 8501
       - key: API_URL
-        value: https://cyclesense-api.onrender.com
+        value: https://cyclesense-yjca.onrender.com
     healthCheckPath: /_stcore/health
     healthCheckTimeout: 30
     healthCheckInterval: 15

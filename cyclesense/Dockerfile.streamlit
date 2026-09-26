@@ -31,7 +31,7 @@ RUN mkdir -p artifacts reports/figures
 EXPOSE 8501
 
 # Build argument for API URL
-ARG API_URL=http://localhost:8000
+ARG API_URL=https://cyclesense-yjca.onrender.com
 ENV API_URL=${API_URL}
 
 # Health check

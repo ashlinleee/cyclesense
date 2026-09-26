@@ -1,0 +1,100 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Install dependencies
+      working-directory: ./cyclesense
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Run tests
+      working-directory: ./cyclesense
+      run: |
+        pytest tests/ -v --cov=src --cov=api
+    
+    - name: Run data validation
+      working-directory: ./cyclesense
+      run: |
+        python src/data.py
+        python tests/test_features.py
+
+  build-and-push:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+    
+    - name: Build backend image
+      working-directory: ./cyclesense
+      run: |
+        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/cyclesense-backend:latest -f Dockerfile .
+    
+    - name: Build frontend image
+      working-directory: ./cyclesense
+      run: |
+        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/cyclesense-frontend:latest -f Dockerfile.streamlit --build-arg API_URL=https://cyclesense-yjca.onrender.com .
+    
+    - name: Push backend image
+      run: |
+        docker push ${{ secrets.DOCKERHUB_USERNAME }}/cyclesense-backend:latest
+    
+    - name: Push frontend image
+      run: |
+        docker push ${{ secrets.DOCKERHUB_USERNAME }}/cyclesense-frontend:latest
+
+  deploy-render:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    
+    steps:
+    - name: Deploy to Render
+      run: |
+        echo "Deployment to Render will be triggered automatically via render.yaml"
+        echo "Backend: https://cyclesense-yjca.onrender.com"
+        echo "Frontend: https://cyclesense-4aqdbkuetfovxwn4upbssh.streamlit.app"
+
+  health-check:
+    needs: deploy-render
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    
+    steps:
+    - name: Health check - Backend API
+      run: |
+        sleep 30  # Wait for deployment to complete
+        curl -f https://cyclesense-yjca.onrender.com/health || exit 1
+    
+    - name: Health check - Streamlit
+      run: |
+        curl -f https://cyclesense-4aqdbkuetfovxwn4upbssh.streamlit.app/_stcore/health || exit 1
