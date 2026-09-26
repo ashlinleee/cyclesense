@@ -48,29 +48,30 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
     
-    - name: Login to Docker Hub
+    - name: Log in to GitHub Container Registry
       uses: docker/login-action@v3
       with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     
     - name: Build backend image
       working-directory: ./cyclesense
       run: |
-        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/cyclesense-backend:latest -f Dockerfile .
+        docker build -t ghcr.io/${{ github.repository }}/cyclesense-backend:latest -f Dockerfile .
     
     - name: Build frontend image
       working-directory: ./cyclesense
       run: |
-        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/cyclesense-frontend:latest -f Dockerfile.streamlit --build-arg API_URL=https://cyclesense-yjca.onrender.com .
+        docker build -t ghcr.io/${{ github.repository }}/cyclesense-frontend:latest -f Dockerfile.streamlit --build-arg API_URL=https://cyclesense-yjca.onrender.com .
     
     - name: Push backend image
       run: |
-        docker push ${{ secrets.DOCKERHUB_USERNAME }}/cyclesense-backend:latest
+        docker push ghcr.io/${{ github.repository }}/cyclesense-backend:latest
     
     - name: Push frontend image
       run: |
-        docker push ${{ secrets.DOCKERHUB_USERNAME }}/cyclesense-frontend:latest
+        docker push ghcr.io/${{ github.repository }}/cyclesense-frontend:latest
 
   deploy-render:
     needs: build-and-push
@@ -81,8 +82,8 @@ jobs:
     - name: Deploy to Render
       run: |
         echo "Deployment to Render will be triggered automatically via render.yaml"
-        echo "Backend: https://cyclesense-yjca.onrender.com"
-        echo "Frontend: https://cyclesense-4aqdbkuetfovxwn4upbssh.streamlit.app"
+        echo "Backend API: https://cyclesense-yjca.onrender.com"
+        echo "Streamlit Frontend: https://cyclesense-4aqdbkuetfovxwn4upbssh.streamlit.app (separate deployment)"
 
   health-check:
     needs: deploy-render
