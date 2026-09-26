@@ -1,0 +1,51 @@
+services:
+  backend:
+    build:
+      context: ./cyclesense
+      dockerfile: Dockerfile
+    container_name: cyclesense-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+    volumes:
+      - ./cyclesense/data:/app/data
+      - ./cyclesense/artifacts:/app/artifacts
+      - ./cyclesense/reports:/app/reports
+    networks:
+      - cyclesense-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./cyclesense
+      dockerfile: Dockerfile.streamlit
+      args:
+        API_URL: http://backend:8000
+    container_name: cyclesense-frontend
+    ports:
+      - "8501:8501"
+    environment:
+      - API_URL=http://backend:8000
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - cyclesense-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+networks:
+  cyclesense-network:
+    driver: bridge

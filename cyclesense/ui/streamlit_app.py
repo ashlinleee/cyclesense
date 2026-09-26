@@ -11,11 +11,16 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import date, datetime
 import json
-
+import time
 import os
 
-# API configuration (reads environment variable API_URL, defaults to Render API)
-API_URL = os.getenv("API_URL", "https://cyclesense-yjca.onrender.com").rstrip("/")
+# API configuration (reads environment variable API_URL, defaults to localhost for development)
+DEFAULT_API_URL = os.getenv("API_URL", "http://localhost:8000")
+API_URL = DEFAULT_API_URL.rstrip("/")
+
+# For development, if we're in Docker Compose, use the service name
+if os.getenv("DOCKER_COMPOSE") == "true":
+    API_URL = "http://backend:8000"
 
 # Page configuration
 st.set_page_config(
@@ -57,23 +62,33 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-def call_api(endpoint, method="GET", data=None):
-    """Call the CycleSense API."""
-    try:
-        url = f"{API_URL}{endpoint}"
-        if method == "GET":
-            response = requests.get(url, timeout=30)
-        else:
-            response = requests.post(url, json=data, timeout=30)
-        
-        if response.status_code == 200:
-            return response.json()
-        else:
-            st.error(f"API Error: {response.status_code} - {response.text}")
-            return None
-    except requests.exceptions.RequestException as e:
-        st.error(f"Connection Error: {e}")
-        return None
+def call_api(endpoint, method="GET", data=None, max_retries=3):
+    """Call the CycleSense API with retry logic."""
+    for attempt in range(max_retries):
+        try:
+            url = f"{API_URL}{endpoint}"
+            if method == "GET":
+                response = requests.get(url, timeout=30)
+            else:
+                response = requests.post(url, json=data, timeout=30)
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                st.error(f"API Error: {response.status_code} - {response.text}")
+                if attempt < max_retries - 1:
+                    st.warning(f"Retrying... (attempt {attempt + 1}/{max_retries})")
+                    time.sleep(2 ** attempt)  # Exponential backoff
+                return None
+        except requests.exceptions.RequestException as e:
+            st.error(f"Connection Error: {e}")
+            if attempt < max_retries - 1:
+                st.warning(f"Retrying... (attempt {attempt + 1}/{max_retries})")
+                time.sleep(2 ** attempt)  # Exponential backoff
+            else:
+                st.error(f"Failed to connect to API at {API_URL}")
+                st.info("Please check if the backend service is running")
+                return None
 
 
 def render_disclaimer():

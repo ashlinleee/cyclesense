@@ -1,6 +1,7 @@
 # Git
 .git
 .gitignore
+.github
 
 # Python
 __pycache__
@@ -9,8 +10,8 @@ __pycache__
 *.pyd
 .Python
 *.so
+*.egg
 *.egg-info
-.eggs
 dist
 build
 
@@ -28,40 +29,42 @@ ENV
 
 # Jupyter
 .ipynb_checkpoints
-*.ipynb
-
-# MLflow
-mlflow.db
-mlruns
-
-# DVC
-.dvc
-.dvc.lock
-*.dvc
-
-# Processed data (keep raw data)
-data/processed
-data/reference
-
-# Reports figures (keep important ones)
-reports/figures/*.png
-!reports/figures/.gitkeep
-
-# Allow model artifacts
-!artifacts/*.joblib
-!artifacts/*.json
-!artifacts/*.pkl
 
 # Environment
 .env
 .env.local
 
+# Documentation
+README.md
+DEPLOYMENT.md
+*.md
+
+# Tests
+.pytest_cache
+.coverage
+htmlcov
+tests
+
+# Data (will be mounted as volume)
+data/raw/*.csv
+data/processed/*.csv
+
+# ML artifacts (will be mounted as volume)  
+artifacts/*.joblib
+artifacts/*.pkl
+
+# Logs
+*.log
+logs
+
 # OS
 .DS_Store
 Thumbs.db
 
-# Logs
-*.log
+# Docker
+docker-compose.yml
+Dockerfile*
+.dockerignore
 
-# Streamlit cache
-.streamlit/cache
+# CI/CD
+render.yaml

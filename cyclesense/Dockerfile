@@ -9,6 +9,7 @@ ENV PYTHONPATH=/app
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     gcc \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
@@ -34,6 +35,9 @@ EXPOSE 8000
 # Copy entrypoint script
 COPY entrypoint.sh .
 RUN chmod +x entrypoint.sh
+
+# Health check
+HEALTHCHECK CMD curl -f http://localhost:8000/health || exit 1
 
 # Set entrypoint
 ENTRYPOINT ["./entrypoint.sh"]

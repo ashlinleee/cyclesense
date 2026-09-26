@@ -1,4 +1,5 @@
 services:
+  # Backend API Service
   - type: web
     name: cyclesense-api
     env: docker
@@ -11,7 +12,26 @@ services:
         value: "1"
       - key: PYTHONDONTWRITEBYTECODE
         value: "1"
+      - key: API_URL
+        value: https://cyclesense-api.onrender.com
     healthCheckPath: /health
+    healthCheckTimeout: 30
+    healthCheckInterval: 15
+    autoDeploy: true
+    numInstances: 1
+
+  # Frontend Streamlit Service
+  - type: web
+    name: cyclesense-frontend
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile.streamlit
+    envVars:
+      - key: PORT
+        value: 8501
+      - key: API_URL
+        value: https://cyclesense-api.onrender.com
+    healthCheckPath: /_stcore/health
     healthCheckTimeout: 30
     healthCheckInterval: 15
     autoDeploy: true
