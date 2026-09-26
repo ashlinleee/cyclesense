@@ -14,15 +14,13 @@ RUN apt-get update && apt-get install -y \
 
 # Copy requirements first for better caching
 COPY requirements.txt .
-COPY cyclesense/requirements.txt ./cyclesense/
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install --no-cache-dir -r cyclesense/requirements.txt
 
 # Copy application code
-COPY cyclesense/ui/ ./ui/
-COPY cyclesense/src/ ./src/
+COPY ui/ ./ui/
+COPY src/ ./src/
 
 # Create necessary directories
 RUN mkdir -p artifacts reports/figures
