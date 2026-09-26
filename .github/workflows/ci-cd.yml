@@ -61,7 +61,11 @@ jobs:
     - name: Build frontend image
       working-directory: ./cyclesense
       run: |
-        docker build -t ghcr.io/${{ github.repository }}/cyclesense-frontend:latest -f cyclesense/Dockerfile.streamlit --build-arg API_URL=https://cyclesense-yjca.onrender.com .
+        docker build \
+  -t ghcr.io/ashlinleee/cyclesense/cyclesense-frontend:latest \
+  -f Dockerfile.streamlit \
+  --build-arg API_URL=https://cyclesense-yjca.onrender.com \
+  .
     
     - name: Push backend image
       run: |
