@@ -1,39 +1,28 @@
 FROM python:3.9-slim
 
-# Set working directory
 WORKDIR /app
 
-# Set PYTHONPATH so python can locate modules
 ENV PYTHONPATH=/app
 
-# Install system dependencies
 RUN apt-get update && apt-get install -y \
     gcc \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first for better caching
-COPY requirements.txt .
+COPY cyclesense/requirements.txt ./cyclesense/
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r cyclesense/requirements.txt
 
-# Copy application code
-COPY ui/ ./ui/
-COPY src/ ./src/
+COPY cyclesense/ui/ ./ui/
+COPY cyclesense/src/ ./src/
 
-# Create necessary directories
 RUN mkdir -p artifacts reports/figures
 
-# Expose Streamlit port
 EXPOSE 8501
 
-# Build argument for API URL
 ARG API_URL=https://cyclesense-yjca.onrender.com
 ENV API_URL=${API_URL}
 
-# Health check
 HEALTHCHECK CMD curl -f http://localhost:8501/_stcore/health || exit 1
 
-# Run Streamlit
 CMD ["streamlit", "run", "ui/streamlit_app.py", "--server.port=8501", "--server.address=0.0.0.0", "--server.headless=true", "--server.fileWatcherType=none"]
