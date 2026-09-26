@@ -14,8 +14,8 @@ import json
 
 import os
 
-# API configuration (reads environment variable API_URL, defaults to local API)
-API_URL = os.getenv("API_URL", "http://localhost:8000").rstrip("/")
+# API configuration (reads environment variable API_URL, defaults to Render API)
+API_URL = os.getenv("API_URL", "https://cyclesense-yjca.onrender.com").rstrip("/")
 
 # Page configuration
 st.set_page_config(

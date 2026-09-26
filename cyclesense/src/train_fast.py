@@ -54,6 +54,13 @@ def train_fast_model():
     # Load and prepare data
     logger.info("Loading datasets...")
     df = load_and_join_datasets()
+    
+    # Check if we got synthetic data (empty original data)
+    if len(df) < 100:
+        logger.warning(f"Dataset too small for training: {len(df)} records")
+        logger.warning("This is expected in Streamlit deployment - using pre-trained model fallback")
+        raise ValueError("Dataset too small for training. In production, ensure data files are present or use a pre-trained model.")
+    
     df_with_target = construct_next_cycle_target(df)
     df_engineered = engineer_features(df_with_target)
     

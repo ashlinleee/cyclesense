@@ -53,6 +53,10 @@ mlruns/
 data/processed/
 data/reference/
 
+# Streamlit - allow config but ignore cache
+!.streamlit/config.toml
+.streamlit/cache/
+
 # Artifacts
 artifacts/*
 !artifacts/.gitkeep

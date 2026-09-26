@@ -1,0 +1,2 @@
+# System packages for Streamlit deployment
+# (Currently empty - all dependencies are in requirements.txt)
