@@ -591,10 +591,10 @@ def render_sidebar():
         '<span class="brand-mark">✦</span><span class="brand-title">CycleSense</span><div class="brand-subtitle">cycle clarity, thoughtfully</div>',
         unsafe_allow_html=True,
     )
-    pages = {"Overview": "Dashboard", "Estimate": "Estimate", "Patterns": "Patterns", "Model": "Model", "About": "About"}
+    pages = {"Estimate": "Estimate", "Patterns": "Patterns"}
     labels = list(pages.keys())
     if "nav_page" not in st.session_state or st.session_state.nav_page not in labels:
-        st.session_state.nav_page = "Overview"
+        st.session_state.nav_page = "Estimate"
     page = st.sidebar.radio("Navigation", labels, key="nav_page", label_visibility="collapsed")
     st.sidebar.markdown("---")
     st.sidebar.caption("EDUCATIONAL USE ONLY")
@@ -604,16 +604,10 @@ def render_sidebar():
 
 def main():
     page = render_sidebar()
-    if page == "Dashboard":
-        render_dashboard()
-    elif page == "Estimate":
+    if page == "Estimate":
         render_predict_page()
-    elif page == "Patterns":
-        render_pattern_insights()
-    elif page == "Model":
-        render_model_insights()
     else:
-        render_about()
+        render_pattern_insights()
     st.markdown('<div class="footer-note">CycleSense · Built for educational pattern exploration</div>', unsafe_allow_html=True)
 
 
