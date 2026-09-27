@@ -72,6 +72,51 @@ api_metrics = {
     "start_time": datetime.now().isoformat()
 }
 
+# Cycle lengths accepted by the request schema. Keeping the same bounds here
+# makes the final estimate resilient if this helper is reused elsewhere.
+MIN_CYCLE_LENGTH_DAYS = 20.0
+MAX_CYCLE_LENGTH_DAYS = 45.0
+
+
+def personalize_cycle_estimate(model_prediction: float, request: PredictionRequest) -> float:
+    """Blend the population-model output with a user's recent cycle history.
+
+    A population model can correctly regress toward the overall mean when it has
+    limited signal for a new person. For this product, recent self-reported
+    history is the most direct person-specific signal, so the final educational
+    estimate gives it deliberate weight. This also prevents the mean model or a
+    cold-start fallback from returning the same value for every person.
+    """
+    safe_model_prediction = float(
+        np.clip(model_prediction, MIN_CYCLE_LENGTH_DAYS, MAX_CYCLE_LENGTH_DAYS)
+    )
+    history = [
+        float(cycle)
+        for cycle in (request.historical_cycles or [])
+        if MIN_CYCLE_LENGTH_DAYS <= float(cycle) <= MAX_CYCLE_LENGTH_DAYS
+    ]
+
+    if not history:
+        return round(safe_model_prediction, 2)
+
+    # The request is most-recent first. Weight at most three entries so an old
+    # record cannot outweigh the person's current pattern.
+    recent_history = np.asarray(history[:3], dtype=float)
+    recency_weights = np.arange(len(recent_history), 0, -1, dtype=float)
+    weighted_recent_average = float(
+        np.average(recent_history, weights=recency_weights)
+    )
+    current_cycle = float(request.cycle_history.cycle_length_days)
+    personal_baseline = 0.75 * weighted_recent_average + 0.25 * current_cycle
+
+    # Retain the model's contextual contribution while making an individual's
+    # actual cycle history the stronger signal for this educational estimate.
+    personalized_estimate = 0.45 * safe_model_prediction + 0.55 * personal_baseline
+    return round(
+        float(np.clip(personalized_estimate, MIN_CYCLE_LENGTH_DAYS, MAX_CYCLE_LENGTH_DAYS)),
+        2,
+    )
+
 
 def load_model():
     """Load the trained model and preprocessor."""
@@ -417,7 +462,8 @@ async def predict(request: PredictionRequest):
         X_processed = preprocessor.transform(input_data)
         
         # Make prediction
-        prediction = model.predict(X_processed)[0]
+        model_prediction = float(model.predict(X_processed)[0])
+        prediction = personalize_cycle_estimate(model_prediction, request)
         
         # Calculate latency
         latency_ms = (time.time() - start_time) * 1000
@@ -426,7 +472,12 @@ async def predict(request: PredictionRequest):
         api_metrics["prediction_count"] += 1
         api_metrics["total_latency_ms"] += latency_ms
         
-        logger.info(f"Prediction: {prediction:.2f} days, latency: {latency_ms:.2f}ms")
+        logger.info(
+            "Prediction: %.2f days (model: %.2f days), latency: %.2fms",
+            prediction,
+            model_prediction,
+            latency_ms,
+        )
         
         # Calculate next period date if start_date is provided
         next_period_date = None
@@ -436,10 +487,10 @@ async def predict(request: PredictionRequest):
             next_period_date = next_period_date.isoformat()
         
         return PredictionResponse(
-            predicted_next_cycle_length_days=round(prediction, 2),
+            predicted_next_cycle_length_days=prediction,
             predicted_next_period_date=next_period_date,
             model_version=model_metadata.get('model_version', '1.0.0') if model_metadata else '1.0.0',
-            prediction_type="educational_estimate",
+            prediction_type="personalized_educational_estimate",
             confidence_interval=None  # Could add uncertainty estimation
         )
         
