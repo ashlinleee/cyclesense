@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main, master]
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -58,7 +62,7 @@ jobs:
         working-directory: ./cyclesense
         run: |
           docker build \
-            -t ghcr.io/${{ github.repository }}/cyclesense-backend:latest \
+            -t ghcr.io/ashlinleee/cyclesense-backend:latest \
             -f Dockerfile \
             .
 
@@ -66,18 +70,18 @@ jobs:
         working-directory: ./cyclesense
         run: |
           docker build \
-            -t ghcr.io/${{ github.repository }}/cyclesense-frontend:latest \
+            -t ghcr.io/ashlinleee/cyclesense-frontend:latest \
             -f Dockerfile.streamlit \
             --build-arg API_URL=https://cyclesense-yjca.onrender.com \
             .
 
       - name: Push backend image
         run: |
-          docker push ghcr.io/${{ github.repository }}/cyclesense-backend:latest
+          docker push ghcr.io/ashlinleee/cyclesense-backend:latest
 
       - name: Push frontend image
         run: |
-          docker push ghcr.io/${{ github.repository }}/cyclesense-frontend:latest
+          docker push ghcr.io/ashlinleee/cyclesense-frontend:latest
 
   deploy-render:
     needs: build-and-push

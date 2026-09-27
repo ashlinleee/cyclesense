@@ -1,38 +1,56 @@
 services:
-  # Backend API Service
+
+  # ============================================================
+  # BACKEND API
+  # ============================================================
+
   - type: web
-    name: cyclesense-api
-    env: docker
+    name: cyclesense-api-ghcr
+    runtime: image
     plan: free
-    dockerfilePath: ./Dockerfile
+
+    image:
+      url: ghcr.io/ashlinleee/cyclesense-backend:latest
+      creds:
+        fromRegistryCreds:
+          name: cyclesense-ghcr
+
     envVars:
       - key: PORT
-        value: 8000
+        value: "8000"
+
       - key: PYTHONUNBUFFERED
         value: "1"
+
       - key: PYTHONDONTWRITEBYTECODE
         value: "1"
+
       - key: API_URL
         value: https://cyclesense-yjca.onrender.com
-    healthCheckPath: /health
-    healthCheckTimeout: 30
-    healthCheckInterval: 15
-    autoDeploy: true
-    numInstances: 1
 
-  # Frontend Streamlit Service
+    healthCheckPath: /health
+
+
+  # ============================================================
+  # STREAMLIT FRONTEND
+  # ============================================================
+
   - type: web
-    name: cyclesense-frontend
-    env: docker
+    name: cyclesense-frontend-ghcr
+    runtime: image
     plan: free
-    dockerfilePath: ./Dockerfile.streamlit
+
+    image:
+      url: ghcr.io/ashlinleee/cyclesense-frontend:latest
+      creds:
+        fromRegistryCreds:
+          name: cyclesense-ghcr
+
     envVars:
       - key: PORT
-        value: 8501
+        value: "8501"
+
       - key: API_URL
         value: https://cyclesense-yjca.onrender.com
+
     healthCheckPath: /_stcore/health
-    healthCheckTimeout: 30
-    healthCheckInterval: 15
-    autoDeploy: true
-    numInstances: 1
